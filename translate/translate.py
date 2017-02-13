@@ -30,30 +30,38 @@ def trans(word):
 
     webUrl = 'http://fanyi.baidu.com/#%s/%s/%s' % (sourceLang, toLang, urlencode({'': word}).strip('='))
     if len(dict_result):
-        symbol = dict_result.get('simple_means').get('symbols')[0]
-        parts = symbol.get('parts')
-        title = result.get('trans_result').get('data')[0].get('dst') + ' '
-        if (sourceLang == 'en'):
-            for it in parts:
-                title += '%s%s ,' % (it.get('part'), unicode.decode(it.get('means')[0]))
-            subTitle = '英:[%s], 美:[%s]' % (symbol.get('ph_en'), symbol.get('ph_am'))
-        else:
-            for it in parts[0].get('means'):
-                title += it.get('word_mean') + ' ,'
-            subTitle = '拼音:' + symbol.get('word_symbol')
-        items = [{
-                     'title': unicode(title.strip(',')),
-                     'subtitle': unicode(subTitle.strip(',')),
-                     'arg': webUrl,
-                     'icon': 'chrome.png'
-                 }]
-        return generate_xml(items)
+        try:
+            symbol = dict_result.get('simple_means').get('symbols')[0]
+            parts = symbol.get('parts')
+            title = result.get('trans_result').get('data')[0].get('dst') + ' '
+            if (sourceLang == 'en'):
+                for it in parts:
+                    title += '%s%s ,' % (it.get('part'), unicode.decode(it.get('means')[0]))
+                subTitle = '英:[%s], 美:[%s]' % (symbol.get('ph_en'), symbol.get('ph_am'))
+            else:
+                for it in parts[0].get('means'):
+                    title += it.get('word_mean') + ' ,'
+                subTitle = '拼音:' + symbol.get('word_symbol')
+            items = [{
+                'title': unicode(title.strip(',')),
+                'subtitle': unicode(subTitle.strip(',')),
+                'arg': webUrl,
+                'icon': 'chrome.png'
+            }]
+            return generate_xml(items)
+        except:
+            items = [{
+                'title': u'没有找到哎，试试在线引擎吧',
+                'arg': webUrl,
+                'icon': 'chrome.png'
+            }]
+            return generate_xml(items)
     else:
         items = [{
-                     'title': u'没有找到哎，试试在线引擎吧',
-                     'arg': webUrl,
-                     'icon': 'chrome.png'
-                 }]
+            'title': u'没有找到哎，试试在线引擎吧',
+            'arg': webUrl,
+            'icon': 'chrome.png'
+        }]
         return generate_xml(items)
 
 def generate_xml(items):
