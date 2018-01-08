@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import urllib2
+import random
+import md5
 import json
 import sys
 from xml.etree import ElementTree as ET
@@ -9,6 +11,9 @@ from urllib import urlencode
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
+
+appid = '20171229000110334'
+secretKey = 'FUUwv0kA_oi0F8Z5mV1E'
 
 # 百度翻译，支持中文⇌英文
 def trans(word):
@@ -22,29 +27,28 @@ def trans(word):
         toLang = 'zh'
     else:
         toLang = 'en'
-    request = urllib2.Request(
-        'http://fanyi.baidu.com/v2transapi?' + urlencode({'from': sourceLang, 'to': toLang, 'query': word}))
-    request.add_header("Host", "fanyi.baidu.com")
-    result = json.load(urllib2.urlopen(request))
-    dict_result = result.get('dict_result')
+
+    api = 'http://api.fanyi.baidu.com/api/trans/vip/translate?'
+    salt = random.randint(32768, 65536)
+    sign = appid + word + str(salt) + secretKey
+    m1 = md5.new()
+    m1.update(sign)
+    sign = m1.hexdigest()
+    api = api + urlencode({'appid': appid, 'q': word, 'from': sourceLang, 'to': toLang, 'salt': str(salt), 'sign': sign})
+
+    response = urllib2.urlopen(api)
+    result = json.loads(response.read())
+    dict_result = result.get('trans_result')
 
     webUrl = 'http://fanyi.baidu.com/#%s/%s/%s' % (sourceLang, toLang, urlencode({'': word}).strip('='))
     if len(dict_result):
         try:
-            symbol = dict_result.get('simple_means').get('symbols')[0]
-            parts = symbol.get('parts')
-            title = result.get('trans_result').get('data')[0].get('dst') + ' '
-            if (sourceLang == 'en'):
-                for it in parts:
-                    title += '%s%s ,' % (it.get('part'), unicode.decode(it.get('means')[0]))
-                subTitle = '英:[%s], 美:[%s]' % (symbol.get('ph_en'), symbol.get('ph_am'))
-            else:
-                for it in parts[0].get('means'):
-                    title += it.get('word_mean') + ' ,'
-                subTitle = '拼音:' + symbol.get('word_symbol')
+            dict_result = dict_result[0]
+            src = dict_result.get('src')
+            dst = dict_result.get('dst')
             items = [{
-                'title': unicode(title.strip(',')),
-                'subtitle': unicode(subTitle.strip(',')),
+                'title': unicode(dst),
+                'subtitle': unicode(src),
                 'arg': webUrl,
                 'icon': 'chrome.png'
             }]
